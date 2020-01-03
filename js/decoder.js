@@ -60,23 +60,56 @@ $("#submitSearchInfoForm").on('click', async function(){
                 $("#output").append('<p>   - No Outputs!</p>');
             }
 
-            // $("#output").text(decodedInput);
             $("#framesearch").attr("style","display:block;");
         } else if (networktype == "testnet"){
-            const decodedInput = await decoderTestnet.decodeInputById(TxId);
-            console.log(decodedInput)
+          const decodedInput = await decoderTestnet.decodeInputById(TxId);
+          console.log(decodedInput)
+          const decodedOutput = await decoderTestnet.decodeResultById(TxId);
+          console.log(decodedOutput);
+
+          console.log('Method Calling: '  + decodedInput.methodName);
+            var div = $(`<p>Method Calling: <b>${decodedInput.methodName}</b></p><br>`);
+            console.log('Decoded Input: ');
+
+            $("#output").append(div);
+            $("#output").append('<p>Decoded Input: </p>');
+
+
+            if(decodedInput.decodedInput._length != 0){
+                for(var i=0; i<decodedInput.decodedInput._length; i++){
+                    console.log(`   ${i}: ${decodedInput.inputTypes[i]}     ${decodedInput.inputNames[i]} => ${decodedInput.decodedInput[i]}`);
+                    var input = $(`<p>   ${i}: ${decodedInput.inputTypes[i]} <b>${decodedInput.inputNames[i]}</b> => ${decodedInput.decodedInput[i]}</p>`)
+                    $("#output").append(input);
+                }
+            } else {
+                console.log('- No Inputs!')
+                $("#output").append('<p>   - No Inputs!</p>');
+            }
+
+
+            console.log('Decoded Output: ')
+            $("#output").append('<br><p>Decoded Output: </p>');
+            if(decodedOutput.decodedOutput._length != 0){
+                for(var i=0; i<decodedOutput.decodedOutput._length; i++){
+                    let output = decodedOutput.outputNames[i] == null ? '' : decodedOutput.outputNames[i];
+                    console.log(`   ${i}: ${decodedOutput.outputTypes[i]} ${output} => ${decodedOutput.decodedOutput[i]}`)
+                    var outputP = $(`<p>   ${i}: ${decodedOutput.outputTypes[i]} <b>${output}</b> => ${decodedOutput.decodedOutput[i]}</p>`)
+                    $("#output").append(outputP);
+                }
+            } else {
+                console.log('- No Outputs!')
+                $("#output").append('<p>   - No Outputs!</p>');
+            }
+
+            $("#framesearch").attr("style","display:block;");
         }
     } catch(e) {
-        console.log(e);
-        if((e.toString().includes('Transaction not found'))){
-            $("#searchAlertMessage").html("Transaction not found");
-            $('#searchAlertDiv').modal('show');
-        } else if((e.toString().includes('No Contract found for this transaction hash.'))){
-            $("#searchAlertMessage").html("No Smart Contract found for this transaction hash.");
-            $('#searchAlertDiv').modal('show');
+        if((e.toString()).includes('Transaction not found')){
+            alert('Transaction not found')
+        } else if((e.toString()).includes('No Contract found for this transaction hash.')){
+            alert('No Smart Contract found for this transaction hash.')
         } else {
-            $("#searchAlertMessage").html(e.toString());
-            $('#searchAlertDiv').modal('show');
+            alert(e.toString())
         }
     }
 
