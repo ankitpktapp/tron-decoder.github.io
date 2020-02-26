@@ -23,14 +23,23 @@ $("#submitSearchInfoForm").on('click', async function(){
     try{
         if(networktype == "mainnet"){
             const decodedInput = await decoderMainnet.decodeInputById(TxId);
-            console.log(decodedInput)
             const decodedOutput = await decoderMainnet.decodeResultById(TxId);
-            console.log(decodedOutput)
+            const decodedMessage = await decoderMainnet.decodeRevertMessage(TxId);
+
             console.log('Method Calling: '  + decodedInput.methodName);
             var div = $(`<p>Method Calling: <b>${decodedInput.methodName}</b></p><br>`);
+            console.log('Transaction Status: ' + decodedMessage.txStatus);
+            var div1 = $(`<p>Transaction Status: <b>${decodedMessage.txStatus}</b></p><br>`);
             console.log('Decoded Input: ');
 
             $("#output").append(div);
+            $("#output").append(div1);
+
+            if(decodedMessage.txStatus == "REVERT"){
+              var revrtMsg = $(`<p>Revert Message: <b>${decodedMessage.revertMessage}</b></p><br>`);
+              $("#output").append(revrtMsg);
+            }
+            
             $("#output").append('<p>Decoded Input: </p>');
 
 
@@ -63,15 +72,23 @@ $("#submitSearchInfoForm").on('click', async function(){
             $("#framesearch").attr("style","display:block;");
         } else if (networktype == "testnet"){
           const decodedInput = await decoderTestnet.decodeInputById(TxId);
-          console.log(decodedInput)
           const decodedOutput = await decoderTestnet.decodeResultById(TxId);
-          console.log(decodedOutput);
+          const decodedMessage = await decoderMainnet.decodeRevertMessage(TxId);
 
-          console.log('Method Calling: '  + decodedInput.methodName);
+            console.log('Method Calling: '  + decodedInput.methodName);
             var div = $(`<p>Method Calling: <b>${decodedInput.methodName}</b></p><br>`);
+            console.log('Transaction Status: ' + decodedMessage.txStatus);
+            var div1 = $(`<p>Transaction Status: <b>${decodedMessage.txStatus}</b></p><br>`);
             console.log('Decoded Input: ');
 
             $("#output").append(div);
+            $("#output").append(div1);
+
+            if(decodedMessage.txStatus == "REVERT"){
+              var revrtMsg = $(`<p>Revert Message: <b>${decodedMessage.revertMessage}</b></p><br>`);
+              $("#output").append(revrtMsg);
+            }
+
             $("#output").append('<p>Decoded Input: </p>');
 
 
@@ -1759,6 +1776,46 @@ class TronTxDecoder {
             throw new Error(err)
         }
     }
+
+    /**
+     * Decode revert message from the transaction hash (if any)
+     *
+     * @method decodeRevertMessage
+     * @param {string} transactionID the transaction hash
+     * @return {Object} decoded result with method name
+     */
+    async decodeRevertMessage(transactionID){
+
+      try{
+
+          let transaction = await _getTransaction(transactionID, this.tronNode);
+          let contractAddress = transaction.raw_data.contract[0].parameter.value.contract_address;
+          if(contractAddress === undefined)
+              throw 'No Contract found for this transaction hash.';
+          
+          let txStatus = transaction.ret[0].contractRet;
+          if(txStatus == 'REVERT'){
+              let encodedResult = await _getHexEncodedResult(transactionID, this.tronNode)
+              encodedResult = encodedResult.substring(encodedResult.length - 64, encodedResult.length);
+              console.log(encodedResult)
+              let resMessage = (Buffer.from(encodedResult, 'hex').toString('utf8')).replace(/\0/g, '');
+
+              return {
+                  txStatus: txStatus,
+                  revertMessage: resMessage.replace(/\0/g, '')
+              };
+
+          } else {
+              return {
+                  txStatus: txStatus,
+                  revertMessage: ''
+              };
+          }
+          
+      }catch(err){
+          throw new Error(err)
+      }
+  }
 }
 
 async function _getTransaction(transactionID, tronNode){
