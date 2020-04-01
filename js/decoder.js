@@ -73,7 +73,7 @@ $("#submitSearchInfoForm").on('click', async function(){
         } else if (networktype == "testnet"){
           const decodedInput = await decoderTestnet.decodeInputById(TxId);
           const decodedOutput = await decoderTestnet.decodeResultById(TxId);
-          const decodedMessage = await decoderMainnet.decodeRevertMessage(TxId);
+          const decodedMessage = await decoderTestnet.decodeRevertMessage(TxId);
 
             console.log('Method Calling: '  + decodedInput.methodName);
             var div = $(`<p>Method Calling: <b>${decodedInput.methodName}</b></p><br>`);
